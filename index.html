@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <link rel="icon" href="assets/logo-mbn1.png" type="Favicon">
+
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+
+  <title>Conheça o nosso Menu</title>
+
+  <div id="menu"><main class="grid grid-cols-1 md:grid-cols-2 gap-7 md:gap-10 mx-auto max-w-7xl px-2 mb-16"></div>
+  
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <link href="./styles/output.css" rel="stylesheet" />
+
+
+</head>
+
+<body>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      updateDoc,
+      getDocs,
+      getDoc,
+      doc
+    } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDvnrGRrLGUBFKp8xh9ngQn1uKn9QUGq6s",
+      authDomain: "cardapio-mbn.firebaseapp.com",
+      projectId: "cardapio-mbn",
+      storageBucket: "cardapio-mbn.firebasestorage.app",
+      messagingSenderId: "688708152488",
+      appId: "1:688708152488:web:1e12adcc98ba90046c669d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Função para gerar o próximo número do pedido
+    async function gerarProximoNumeroPedido() {
+      try {
+        const numeroPedido = collection(db, "numeropedido");
+        const numeroPedidoSnapshot = await getDocs(numeroPedido);
+
+        const numeroPedidosArray = [];
+
+        numeroPedidoSnapshot.forEach((doc) => {
+          const pedidonumero = doc.data();
+          pedidonumero.id = doc.id;
+          numeroPedidosArray.push(pedidonumero);
+        });
+
+        console.log(numeroPedidosArray);
+
+        return numeroPedidosArray;
+
+      } catch (error) {
+        console.error("Erro ao gerar numero do pedido:", error);
+
+      }
+    }
+
+    //renomear
+    // Função para gerar o próximo número do pedido
+    async function carregarProdutos() {
+      try {
+        const colecaoProdutos = collection(db, "produtos");
+        const getDocsByProdutos = await getDocs(colecaoProdutos);
+
+        const produtosArray = [];
+
+        getDocsByProdutos.forEach((doc) => {
+          const produto = doc.data();
+          produto.id = doc.id;
+          if (produto.visibilidade !== false) {
+            produtosArray.push(produto);
+          }
+      
+        });
+
+        exibirProdutos(produtosArray);
+
+      } catch (error) {
+        console.error("Erro ao carregar produtos:", error);
+
+      }
+    }
+
+   // EXIBIR PRODUTOS 
+   
+   async function exibirProdutos(produtos){
+    const menuContainer = document.getElementById('menu');
+      menuContainer.innerHTML = ''; // Limpa o contêiner
+
+      produtos.forEach(produto => {
+        const produtoElement = document.createElement('div');
+        produtoElement.classList.add('flex', 'items-center', 'gap-2', 'justify-between', 'mt-3'); // Adiciona uma classe para estilização
+
+        produtoElement.innerHTML = `
+        
+        <img src="${produto.imagem}" alt="${produto.nome}" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
+        <div>
+          <p class="font-bold">${produto.nome}</p>
+          <p class="text-sm">${produto.descricao}</p>
+          <div class="flex items-center gap-2 justify-between mt-3">
+            <p class="font-bold text-lg">${produto.preco}</p>
+            <button class="bg-gray-900 px-5 rounded add-to-cart-btn" data-name="${produto.nome}" data-price="${produto.preco}">
+              <i class="fa fa-plus text-lg text-white"></i>
+            </button>
+          </div>
+        </div>
+            `;
+        menuContainer.appendChild(produtoElement);
+      });
+            
+   }
+
+   carregarProdutos();
+
+    // Função para mudar o status do pedido
+    async function mudarStatusPedido(pedidoId, novoStatus) {
+      try {
+        const pedidoRef = doc(db, "pedidos", pedidoId); // Referência ao documento do pedido
+        await updateDoc(pedidoRef, {
+          "pedido.status": novoStatus // Atualiza o status do pedido
+        });
+        console.log(`Status do pedido ${pedidoId} atualizado para ${novoStatus}`);
+      } catch (error) {
+        console.error("Erro ao atualizar o status do pedido:", error);
+      }
+    }
+
+    const form = document.getElementById("send-form");
+
+    form.addEventListener('submit', async function (event) {
+  event.preventDefault();
+
+  // Obtendo o número do pedido atualizado
+  const numeroPedidosArray = await gerarProximoNumeroPedido();
+  const proximoNumeroPedido = numeroPedidosArray.length + 1;
+
+  const pedido = {
+    mesa: tableParams ? tableParams.toString() : "Mesa não definida",
+    pedido: cart,
+    status: "Recebido", 
+    datadeagora: new Date().toISOString(),
+    numeroPedido: proximoNumeroPedido
+  };
+
+  const numeropedidor = {
+    numeropedido: proximoNumeroPedido
+  };
+
+  try {
+    await addDoc(collection(db, "pedidos"), { pedido });
+    await addDoc(collection(db, "numeropedido"), { numeropedidor });
+
+    alert('Pedido enviado com sucesso!');
+    cartModal.style.display = "none";
+
+  } catch (error) {
+    console.error('Erro ao adicionar documento:', error);
+  }
+
+  cart = [];
+  updateCartModal(); 
+  updateCartCounter();
+});
+
+    // Listener para atualizações em tempo real
+    const pedidosCollection = collection(db, "pedidos");
+    onSnapshot(pedidosCollection, (snapshot) => {
+      const pedidos = [];
+      snapshot.forEach((doc) => {
+        pedidos.push({ id: doc.id, ...doc.data() });
+      });
+      // Atualiza a interface do usuário com os pedidos
+      updatePedidosUI(pedidos);
+    });
+
+    function updatePedidosUI(pedidos) {
+      const pedidosContainer = document.getElementById('pedidos-container');
+      pedidosContainer.innerHTML = ''; // Limpa o contêiner
+
+      pedidos.forEach(pedido => {
+        const pedidoElement = document.createElement('div');
+        pedidoElement.classList.add('pedido-destaque'); // Adiciona uma classe para estilização
+
+        // Formatar a data para o formato brasileiro
+        const dataFormatada = new Date(
+          pedido.pedido.datadeagora
+        ).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
+        pedidoElement.innerHTML = `
+                <p><strong>Pedido:</strong></p> 
+                <ul>
+                    ${pedido.pedido.pedido
+            .map(
+              (item) => `
+                        <li>${item.name} - Quantidade: ${item.quantity}</li>
+                    `
+            )
+            .join("")}
+                </ul>
+                <p><strong>Mesa:</strong> ${pedido.pedido.mesa}</p>
+                <p><strong>Número do Pedido:</strong> ${pedido.pedido.numeroPedido}</p>
+                <p><strong>Data:</strong> ${dataFormatada}</p>
+                <p><strong>Status:</strong> 
+                    <span class="status status-${pedido.pedido.status.toLowerCase()}">
+                        ${pedido.pedido.status}
+                    </span>
+                    <button id="blueBtn" class="button inactive" onclick="toggleButton('blue')">Recebido</button>
+                    <button id="greenBtn" class="button green" onclick="toggleButton('green')">Enviado</button>
+                </p>
+            `;
+        pedidosContainer.appendChild(pedidoElement);
+      });
+
+      // Adicionar eventos de clique aos botões de mudar status
+      const botoesMudarStatus = document.querySelectorAll('.btn-mudar-status');
+      botoesMudarStatus.forEach(botao => {
+        botao.addEventListener('click', function () {
+          const pedidoId = this.getAttribute('data-pedido-id');
+          mudarStatusPedido(pedidoId, "Enviado"); // Muda o status para "Enviado"
+        });
+      });
+    }
+
+    const configDocRef = doc(db, "config", "productVisibility");
+    const docSnap = await getDoc(configDocRef);
+    console.log(docSnap);
+    function configProduto(){
+      const produto = docSnap.data();      
+    }
+  </script>
+
+  <!-- HEADER -->
+  <header class="w-full h-[420px] bg-home bg-cover bg-center bg-screen">
+    <div class="w-full h-full text-center text-white flex flex-col justify-center items-center">
+    </div>
+    </div>
+  </header>
+  <!-- HEADER END -->
+
+  <h2 class="text-2xl md:text-3xl font-bold text-center mt-9 mb-6">
+    Seja Bem Vindo ao Nosso Menu
+  </h2>
+
+  <!-- INICIO MENU -->
+  
+
+  <!-- START MODAL CART -->
+  <div class="bg-black/60 w-full h-full fixed top-0 left-0 z-[99] flex items-center justify-center hidden" id="cart-modal">
+    <form id="send-form">
+      <div class="bg-white p-5 rounded-md min-w-[90%] md:min-w-[600px]">
+        <h2 class="text-center font-bold text-2xl mb-2">Meu Carrinho</h2>
+        <div id="cart-items" class="flex justify-between mb-2 flex-col"></div>
+        <p class="font-bold">Total: <span id="cart-total">Free</span></p>
+        <p class="font-bold mt-3">Número da Mesa:<span id="table-number"></span></p>
+        <p class="text-red-500 hidden" id="address-warn">
+          Digite o número da mesa
+        </p>
+        <div class="flex items-center justify-between mt-5 w-full">
+          <button id="close-model-btn" type="button">Fechar</button> <!-- Alterado para type="button" -->
+          <button class="bg-green-500 text-white px-4 rounded" type="submit">
+            Finalizar Pedido
+          </button>
+        </div>
+        <style>
+          button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+          }
+
+          button {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+          }
+        </style>
+      </div>
+    </form>
+  </div>
+  <!-- END MODAL CART -->
+
+  <!-- START BUTTOON CART FOOTER -->
+  <footer class="w-full bg-red-500 py-3 fixed bottom-0 z-40 flex items justify-center">
+    <button class="flex items-center gap-2 text-white font-bold" id="cart-btn">
+      (<span id="cart-count">0</span>) Veja meu Carrinho
+      <i class="fa fa-cart-plus text-lg text-white"></i>
+    </button>
+  </footer>
+  <!-- BUTTOON CART FOOTER END -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,183 @@
+.pedido-destaque {
+  border: 1px solid #ccc;
+  background-color: #f2f2f2; /* Fundo claro */
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  width: 100%; /* Largura máxima */
+  transition: transform 0.2s ease;
+}
+
+.button-refresh {
+  cursor: pointer;
+}
+
+.button-refresh-container {
+  width: 100%;
+  display: flex;
+  justify-content: end;
+}
+
+.button-refresh {
+  padding: 10px 20px;
+  background-color: #090808; /* Azul padrão */
+  color: white;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.button-refresh:hover {
+  background-color: #575555ce; /* Azul mais escuro ao passar o mouse */
+}
+
+.button-refresh-container {
+  display: flex;
+  margin-top: 20px; /* Espaçamento superior */
+}
+_______________________________________________________________________________________________
+
+.button-refresh1 {
+  cursor: pointer;
+}
+
+.button-refresh1-container {
+  width: 100%;
+  display: flex;
+  justify-content: end;
+}
+
+.button-refresh1 {
+  padding: 10px 20px;
+  background-color: #f23a07; /* Azul padrão */
+  color: white;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 10px;
+
+}
+
+.button-refresh1:hover {
+  background-color: #b72828; /* Azul mais escuro ao passar o mouse */
+}
+
+.button-refresh1-container {
+  display: flex;
+  margin-top: 20px; /* Espaçamento superior */
+}
+_______________________________________________________________________________________________
+
+.button-refresh2 {
+  cursor: pointer;
+}
+
+.button-refresh2-container {
+  width: 100%;
+  display: flex;
+  justify-content: end;
+}
+
+.button-refresh2 {
+  padding: 10px 20px;
+  background-color: #F26513; /* Azul padrão */
+  color: white;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 10px;
+
+}
+
+.button-refresh2:hover {
+  background-color: #913e0e; /* Azul mais escuro ao passar o mouse */
+}
+
+.button-refresh2-container {
+  display: flex;
+  margin-top: 20px; /* Espaçamento superior */
+}
+
+.pedido-destaque p,
+.pedido-destaque ul {
+  margin: 0; /* Remove margens padrão */
+}
+
+.pedido-destaque p:last-child {
+  margin-bottom: 10px; /* Espaço abaixo da data */
+}
+
+@media (max-width: 768px) {
+  .pedido-destaque {
+    padding: 15px; /* Aumenta o padding em telas menores */
+  }
+}
+
+@media (max-width: 480px) {
+  .pedido-destaque {
+    font-size: 14px; /* Reduz o tamanho da fonte em telas muito pequenas */
+  }
+}
+
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Estilização da área do cabeçalho */
+.header-section {
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/assets/fundo.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+}
+
+.header-content h1 {
+  font-size: 2rem;
+  color: white;
+}
+
+/* Conteúdo principal */
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pedido-destaque:hover {
+  transform: translateY(-5px);
+}
+
+_____________________------_________________________________________------________________
+{
+  
+}
+
+.button {
+  padding: 10px 20px;
+  border: none;
+  color: black;
+  font-size: 16px;
+  margin: 10px;
+  cursor: pointer;
+  border-radius: 15px;
+  transition: background-color 0.3s;
+}
+.green {
+  background-color: yellow;
+}
+.blue {
+  background-color: rgba(0, 128, 0, 0.623);
+}
+.inactive {
+  background-color: #ccc;
+}
+

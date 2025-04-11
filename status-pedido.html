@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Fontes e Estilização Externa -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="assets/logo-mbn1.png" type="Favicon" />
+
+    <link rel="stylesheet" href="pedidos.css" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
+    />
+    <link href="./styles/output.css" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+
+    <title>Menu Chama Garçon</title>
+  </head>
+  <body>
+    <!-- HEADER -->
+    <header
+      class="header-section w-full h-[420px] bg-blue-500 bg-cover bg-center"
+    >
+      <div
+        class="header-content w-full h-full text-center text-white flex flex-col justify-center items-center"
+      ></div>
+    </header>
+
+    <!-- HEADER END-->
+
+    <!-- Título da Seção -->
+    <main class="main-container px-6 mt-8">
+      <h2 class="text-2xl md:text-3xl font-bold text-center mb-8">
+        <br />
+        Status do Pedido
+      </h2>
+      <div class="button-refresh-container">
+        <button class="button-refresh" id="button-atualizar">Atualizar</button>
+        <button class="button-refresh1" id="button-deletar">DELETAR</button>
+        <!--<button class="button-refresh2" id="button-zerar">Zerar</button>-->
+      </div>
+      <!-- Container Principal para Pedidos -->
+      <div id="pedidos" class="max-w-7xl mx-auto mb-16">
+        <div id="pedidos-container" class="bg-white shadow-lg rounded-lg p-4">
+          <!-- Pedidos irão ser adicionados aqui dinamicamente pelo JS -->
+        </div>
+      </div>
+    </main>
+
+    <!-- RODAPÉ -->
+    <footer class="footer-section bg-gray-800 text-white py-4 text-center">
+      <p>&copy; 2024 Todos os direitos reservados</p>
+    </footer>
+
+    <!-- Firebase e JS Importação -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        getDocs,
+        updateDoc,
+        doc,
+        deleteDoc,
+        onSnapshot
+      } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDvnrGRrLGUBFKp8xh9ngQn1uKn9QUGq6s",
+        authDomain: "cardapio-mbn.firebaseapp.com",
+        projectId: "cardapio-mbn",
+        storageBucket: "cardapio-mbn.appspot.com",
+        messagingSenderId: "688708152488",
+        appId: "1:688708152488:web:1e12adcc98ba90046c669d",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // Função para mudar o status do pedido
+      async function mudarStatusPedido(pedidoId, novoStatus) {
+        try {
+          const pedidoRef = doc(db, "pedidos", pedidoId);
+          await updateDoc(pedidoRef, {
+            "pedido.status": novoStatus,
+          });
+          console.log(`Status do pedido ${pedidoId} atualizado para ${novoStatus}`);
+        } catch (error) {
+          console.error("Erro ao atualizar o status do pedido:", error);
+        }
+      }
+
+      // Função para deletar pedidos
+      async function deletarPedidos() {
+        try {
+          const pedidosRef = collection(db, "pedidos");
+          const querySnapshot = await getDocs(pedidosRef);
+
+          // Deletar cada pedido do Firebase
+          querySnapshot.forEach(async (doc) => {
+            await deleteDoc(doc.ref);
+            console.log(`Pedido ${doc.id} deletado do Firebase.`);
+          });
+
+          // Limpar a tela
+          const pedidosContainer = document.getElementById("pedidos-container");
+          pedidosContainer.innerHTML = "";
+          console.log("Pedidos removidos da tela.");
+        } catch (error) {
+          console.error("Erro ao deletar os pedidos:", error);
+        }
+      }
+
+      // Função para zerar os pedidos do dia
+      async function zerarPedidos() {
+        try {
+          const confirmacao = confirm(
+            "Tem certeza que deseja zerar todos os pedidos do dia?"
+          );
+          if (confirmacao) {
+            await deletarPedidos(); // Deleta do Firebase e limpa a tela
+            localStorage.clear(); // Limpa o localStorage
+            console.log("Pedidos do dia zerados.");
+          }
+        } catch (error) {
+          console.error("Erro ao zerar os pedidos:", error);
+        }
+      }
+
+      // Função para buscar e exibir pedidos
+      async function buscarPedidos() {
+        try {
+          const pedidosRef = collection(db, "pedidos");
+          const pedidosContainer = document.getElementById("pedidos-container");
+
+          onSnapshot(pedidosRef, (snapshot) => {
+            pedidosContainer.innerHTML = ""; // Limpa antes de recriar a lista
+            
+            const pedidosArray = [];
+            snapshot.forEach((doc) => {
+              const pedido = doc.data();
+              pedido.id = doc.id;
+              pedidosArray.push(pedido);
+            });
+
+            pedidosArray.sort((a, b) => b.pedido.numeroPedido - a.pedido.numeroPedido);
+
+            pedidosArray.forEach((pedido) => {
+              const pedidoDiv = document.createElement("div");
+              pedidoDiv.classList.add("pedido-destaque");
+
+              const dataFormatada = new Date(
+                pedido.pedido.datadeagora
+              ).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
+              pedidoDiv.innerHTML = `
+                  <p><strong>Pedido:</strong></p> 
+                  <ul>
+                      ${pedido.pedido.pedido
+                        .map(
+                          (item) => `
+                          <li>${item.name} - Quantidade: ${item.quantity}</li>
+                      `
+                        )
+                        .join("")}
+                  </ul>
+                  
+                  <p><strong>Mesa:</strong> ${pedido.pedido.mesa}</p>
+                  <p><strong>Número do Pedido:</strong> ${pedido.pedido.numeroPedido}</p>
+                  <p><strong>Data:</strong> ${dataFormatada}</p>
+                  <p class="button-status"><strong>Status:</strong></p>
+                  <button class="button btn-mudar-status ${
+                    pedido.pedido.status === "Recebido" ? "green" : "blue"
+                  }" data-pedido-id="${pedido.id}">
+                      ${pedido.pedido.status === "Recebido" ? "Recebido" : "Pedido Enviado"}
+                  </button>
+              `;
+
+              pedidosContainer.appendChild(pedidoDiv);
+            });
+
+            document.addEventListener("click", async function (event) {
+              if (event.target.classList.contains("btn-mudar-status")) {
+                const pedidoId = event.target.getAttribute("data-pedido-id");
+                const novoStatus = "Pedido Enviado";
+                await mudarStatusPedido(pedidoId, novoStatus);
+                event.target.classList.remove("green");
+                event.target.classList.add("blue");
+                event.target.innerText = "Pedido Enviado";
+              }
+            });
+          });
+        } catch (error) {
+          console.error("Erro ao buscar os pedidos:", error);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        buscarPedidos();
+      });
+
+      const buttonRefresh = document.getElementById("button-atualizar");
+      const buttonDeletar = document.getElementById("button-deletar");
+      const buttonZerar = document.getElementById("button-zerar");
+
+      buttonRefresh.addEventListener("click", function () {
+        location.reload();
+      });
+
+      buttonDeletar.addEventListener("click", async function () {
+        const confirmacao = confirm(
+          "Tem certeza que deseja deletar todos os pedidos?"
+        );
+        if (confirmacao) {
+          await deletarPedidos(); // Deleta do Firebase e limpa a tela
+        }
+      });
+
+      // buttonZerar.addEventListener("click", async function () {
+      //   await zerarPedidos(); // Zera os pedidos do dia
+      // });
+    </script>
+  </body>
+</html>
