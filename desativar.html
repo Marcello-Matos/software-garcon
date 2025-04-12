@@ -13,14 +13,12 @@
 
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
 
-  <title>Conheça o nosso Menu</title>
+  <title>Gestão dos produtos</title>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
   <link href="./styles/output.css" rel="stylesheet" />
-
-
 </head>
 
 <body>
@@ -48,631 +46,115 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-     //renomear
-    // Função para gerar o próximo número do pedido
+
     document.addEventListener('DOMContentLoaded', function() {
-    async function carregarProdutos() {
-      try {
-        const colecaoProdutos = collection(db, "produtos");
-        const getDocsByProdutos = await getDocs(colecaoProdutos);
+      async function carregarProdutos() {
+        try {
+          const colecaoProdutos = collection(db, "produtos");
+          const getDocsByProdutos = await getDocs(colecaoProdutos);
 
-        const produtosArray = [];
+          const produtosArray = [];
 
-        getDocsByProdutos.forEach((doc) => {
-          const produto = doc.data();
-          produto.id = doc.id;
-              produtosArray.push(produto);   
-        });
+          getDocsByProdutos.forEach((doc) => {
+            const produto = doc.data();
+            produto.id = doc.id;
+                produtosArray.push(produto);   
+          });
 
-        //exibirProdutos(produtosArray);
+          exibirProdutos(produtosArray);
 
-      } catch (error) {
-        console.error("Erro ao carregar produtos:", error);
+        } catch (error) {
+          console.error("Erro ao carregar produtos:", error);
+        }
       }
-    }
 
-   // EXIBIR PRODUTOS 
-   
-   async function exibirProdutos(produtos){
-    const menuContainer = document.getElementById('menu');
-      menuContainer.innerHTML = ''; // Limpa o contêiner
+      async function exibirProdutos(produtos) {
+          const menuContainer = document.getElementById('menu');
 
-      produtos.forEach(produto => {
-        const produtoElement = document.createElement('div');
-        produtoElement.classList.add('flex', 'items-center', 'gap-2', 'justify-between', 'mt-3'); // Adiciona uma classe para estilização
+          const html = produtos.map(produto => {
+            const visivel = produto.visibilidade === true;
 
-        produtoElement.innerHTML = `
-        
-        <img src="${produto.imagem}" alt="${produto.nome}" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">${produto.nome}</p>
-          <p class="text-sm">${produto.descricao}</p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">${produto.preco}</p>
-            <button ${$produto.visibilidade == true ? `class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on"`: `class="toggle-btn bg-red-500 px-5 rounded text-white" data-name="${produto.name}" data-status="off"`}>
-              <i class="fa fa-power-off text-lg mr-1"></i> ${produto.visibilidade == true ? 'ON' : 'OFF'}
-            </button>
-          </div>
-        </div>
+            return `
+              <div class="flex items-center gap-2 justify-between mt-3">
+                <img src="${produto.imagem}" alt="${produto.nome}" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
+                <div>
+                  <p class="font-bold">${produto.nome}</p>
+                  <p class="text-sm">${produto.descricao}</p>
+                  <div class="flex items-center gap-2 justify-between mt-3">
+                    <p class="font-bold text-lg">R$ ${parseFloat(produto.preco).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <button class="toggle-btn ${visivel ? 'bg-green-500' : 'bg-red-500'} px-5 rounded text-white"
+                            data-id="${produto.id}"
+                            data-visibilidade="${visivel}">
+                      <i class="fa fa-power-off text-lg mr-1"></i> ${visivel ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                </div>
+              </div>
             `;
-        menuContainer.appendChild(produtoElement);
+          }).join('');
 
-      });
-            
-   }
+          menuContainer.innerHTML = html;
+        }
 
-   carregarProdutos();
+        carregarProdutos();
+      
+        document.addEventListener('click', async function (event) {
+          const button = event.target.closest('.toggle-btn');
 
-   function initState(){
+          if (!button) return;
 
-   }
-                function toggleButton(button) {
-                    const isOn = button.getAttribute('data-status') === 'on';
-                    const productElement = button.closest('.product-item'); // Obtém o contêiner do produto
-    
-                    if (isOn) {
-                        button.innerHTML = '<i class="fa fa-power-off text-lg mr-1"></i> OFF';
-                        button.setAttribute('data-status', 'off');
-                        button.classList.replace('bg-green-500', 'bg-red-500');
-    
-                        // Adiciona a classe para desativar o produto
-                        if (productElement) {
-                            productElement.classList.add('product-off');
-                        }
-                    } else {
-                        button.innerHTML = '<i class="fa fa-power-off text-lg mr-1"></i> ON';
-                        button.setAttribute('data-status', 'on');
-                        button.classList.replace('bg-red-500', 'bg-green-500');
-    
-                        // Remove a classe de desativação
-                        if (productElement) {
-                            productElement.classList.remove('product-off');
-                        }
-                    }
-                }
-    
-                document.querySelectorAll('.toggle-btn').forEach(button => {
-                    button.addEventListener('click', function() {
-                        toggleButton(this);
-                    });
-                });
-            });
+          const produtoId = button.getAttribute('data-id');
+          const visibilidadeAtual = button.getAttribute('data-visibilidade') === 'true';
+          const novoStatus = !visibilidadeAtual;
+
+          try { 
+            const docRefToUpdate = doc(db, "produtos", produtoId);
+
+            await updateDoc(docRefToUpdate, {
+              visibilidade: novoStatus
+            });
+
+            //Ao chamar essa função o conteudo eh atualizado em relação ao que tem no banco, ou seja, se mudou a propriedade do botão
+            // é porque a atualização ocorreu de forma correta.
+            carregarProdutos();
+
+            // Atualiza botão visualmente
+            // button.setAttribute('data-visibilidade', novoStatus);
+            // button.classList.toggle('bg-green-500', novoStatus);
+            // button.classList.toggle('bg-red-500', !novoStatus);
+            // button.innerHTML = `<i class="fa fa-power-off text-lg mr-1"></i> ${novoStatus ? 'ON' : 'OFF'}`;
+
+          }catch (error) {
+            console.error('Erro ao atualizar visibilidade:', error);
+            Toastify({
+              text: "Erro ao atualizar visibilidade!",
+              backgroundColor: "red",
+              duration: 3000
+            }).showToast();
+          }
+        });
+               
+       });
  
-  </script>/
+  </script>
 
   <!-- HEADER -->
   <header class="w-full h-[420px] bg-home bg-cover bg-center bg-screen">
     <div class="w-full h-full text-center text-white flex flex-col justify-center items-center">
     </div>
-    </div>
   </header>
   <!-- HEADER END -->
 
   <h2 class="text-2xl md:text-3xl font-bold text-center mt-9 mb-6">
-    Seja Bem Vindo ao Nosso Menu
+    Gestão de produtos
   </h2>
 
   <!-- INICIO MENU -->
-  <div id="menu">
-    <main class="grid grid-cols-1 md:grid-cols-2 gap-7 md:gap-10 mx-auto max-w-7xl px-2 mb-16">
-    
-      <script>
-        
-      //renomear
-    // Função para gerar o próximo número do pedido
-    async function carregarProdutos() {
-      try {
-        const colecaoProdutos = collection(db, "produtos");
-        const getDocsByProdutos = await getDocs(colecaoProdutos);
-
-        const produtosArray = [];
-
-        getDocsByProdutos.forEach((doc) => {
-          const produto = doc.data();
-          produto.id = doc.id;
-          if (produto.visibilidade !== false) {
-            produtosArray.push(produto);
-          }
-      
-        });
-
-        exibirProdutos(produtosArray);
-
-      } catch (error) {
-        console.error("Erro ao carregar produtos:", error);
-
-      }
-    }
-
-     // EXIBIR PRODUTOS 
-   
-   async function exibirProdutos(produtos){
-    const menuContainer = document.getElementById('menu');
-      menuContainer.innerHTML = ''; // Limpa o contêiner
-
-      produtos.forEach(produto => {
-        const produtoElement = document.createElement('div');
-        produtoElement.classList.add('flex', 'items-center', 'gap-2', 'justify-between', 'mt-3'); // Adiciona uma classe para estilização
-
-        produtoElement.innerHTML = `
-        <img src="${produto.imagem}" alt="${produto.nome}" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">${produto.nome}</p>
-          <p class="text-sm">${produto.descricao}</p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">${produto.preco}</p>
-            <button class="bg-gray-900 px-5 rounded add-to-cart-btn" data-name="${produto.nome}" data-price="${produto.preco}">
-              <i class="fa fa-plus text-lg text-white"></i>
-            </button>
-          </div>
-        </div>
-            `;
-        menuContainer.appendChild(produtoElement);
-      });
-            
-   }
-
-   carregarProdutos();
-
-
-    </script>
-      <!-- FIM PRODUTO ITEM 2 -->
-
-      <!-- INICIO PRODUTO ITEM 3 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/chocolate-quente.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chocolate Quente</p>
-          <p class="text-sm">
-            O chocolate quente é uma bebida reconfortante, feita ao combinar chocolate ou cacau em pó com leite ou água quente, adoçado a gosto.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 3 -->
-
-      <!-- INICIO PRODUTO ITEM 4 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/agua.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Água Tradicional</p>
-          <p class="text-sm">
-            A água com gás é uma variação da água mineral que contém dióxido
-            de carbono dissolvido, o que a torna efervescente.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 4 -->
-
-      <!-- INICIO PRODUTO ITEM 5 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/agua-gas.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Água com Gás</p>
-          <p class="text-sm">
-            A água com gás é uma variação da água mineral que contém dióxido
-            de carbono dissolvido, o que a torna efervescente.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 5 -->
-
-      <!-- INICIO PRODUTO ITEM 6 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/cha-camomila.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chá de Camomila</p>
-          <p class="text-sm">
-            Conhecido por suas propriedades calmantes e relaxantes, é
-            amplamente utilizado para ajudar a reduzir o estresse, a ansiedade
-            e melhorar a qualidade do sono.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 6 -->
-
-      <!-- INICIO PRODUTO ITEM 7 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/cha-leao-maca.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chá Mate Leão de Maçã</p>
-          <p class="text-sm">
-            Conhecido por suas propriedades calmantes e relaxantes, é
-            amplamente utilizado para ajudar a reduzir o estresse, a ansiedade
-            e melhorar a qualidade do sono.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 7 -->
-
-      <!-- INICIO PRODUTO ITEM 8 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/cha-canela.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chá Mate Leão de Canela</p>
-          <p class="text-sm">
-            Conhecido por suas propriedades calmantes e relaxantes, é
-            amplamente utilizado para ajudar a reduzir o estresse, a ansiedade
-            e melhorar a qualidade do sono.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 8 -->
-
-      <!-- INICIO PRODUTO ITEM 9 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/cha-limao.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chá Mate Leão de Limão</p>
-          <p class="text-sm">
-            Conhecido por suas propriedades calmantes e relaxantes, é
-            amplamente utilizado para ajudar a reduzir o estresse, a ansiedade
-            e melhorar a qualidade do sono.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 9 -->
-
-      <!-- INICIO PRODUTO ITEM 10 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/cha-gengibre-limao.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chá Mate Leão Gengibre e Limão</p>
-          <p class="text-sm">
-            Conhecido por suas propriedades calmantes e relaxantes, é
-            amplamente utilizado para ajudar a reduzir o estresse, a ansiedade
-            e melhorar a qualidade do sono.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 10 -->
-
-      <!-- INICIO PRODUTO ITEM 11 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/cha-morango-laranja.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chá Mate Leão Morango e Laranja</p>
-          <p class="text-sm">
-            Conhecido por suas propriedades calmantes e relaxantes, é
-            amplamente utilizado para ajudar a reduzir o estresse, a ansiedade
-            e melhorar a qualidade do sono.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 11 -->
-
-
-      <!-- INICIO PRODUTO ITEM 12 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/cha-frutas.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chá de Frutas Vermelhas</p>
-          <p class="text-sm">
-            O chá de frutas vermelhas é uma infusão saborosa feita a partir de
-            uma mistura de frutas como morango, framboesa, amora e cereja.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 12 -->
-
-      <!-- INICIO PRODUTO ITEM 13 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/cha-hortela.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chá de Hortelã</p>
-          <p class="text-sm">
-            O chá de hortelã é uma infusão refrescante feita com as folhas de
-            hortelã, conhecida por seu sabor suave e aroma agradável.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 13 -->
-
-      <!-- INICIO PRODUTO ITEM 14 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/cha-cidreira.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chá de Erva Cidreira</p>
-          <p class="text-sm">
-            O chá de erva-cidreira é uma infusão feita com as folhas da planta
-            conhecida por seu aroma cítrico e refrescante.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 14 -->
-
-      <!-- INICIO PRODUTO ITEM 15 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/barra-cereal-amendoa.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Barra de Cereal (Amendoa)</p>
-          <p class="text-sm">
-            Rica em fibras, vitaminas e minerais, ela oferece energia rápida e
-            ajuda a manter a saciedade por mais tempo.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 15 -->
-
-      <!-- INICIO PRODUTO ITEM 16 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/barra-cereal-cramberry.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Barra de Cereal (Cramberry)</p>
-          <p class="text-sm">
-            Rica em fibras, vitaminas e minerais, ela oferece energia rápida e
-            ajuda a manter a saciedade por mais tempo.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 16 -->
-
-      <!-- INICIO PRODUTO ITEM 17 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/energetico-jd.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Energético JD</p>
-          <p class="text-sm">
-            O energético é uma bebida formulada para aumentar a disposição e
-            combater o cansaço, geralmente contendo cafeína, taurina, glicose
-            e vitaminas do complexo B.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 17 -->
-
-      <!-- INICIO PRODUTO ITEM 18 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/energetico-zero.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Energético JD Zero Açúcar</p>
-          <p class="text-sm">
-            O energético zero açúcar é uma versão da bebida energética
-            tradicional, mas sem adição de açúcar, utilizando adoçantes
-            artificiais ou naturais para proporcionar o sabor doce.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 18 -->
-
-      <!-- INICIO PRODUTO ITEM 19 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/chocolate-talento.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chocolate Talento (vermelho)</p>
-          <p class="text-sm">
-            Cada barra combina o sabor marcante do chocolate Garoto com
-            ingredientes selecionados, proporcionando uma experiência única
-            aos apreciadores.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 19 -->
-
-      <!-- INICIO PRODUTO ITEM 20 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/chocolate-talento-verde.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chocolate Talento (verde)</p>
-          <p class="text-sm">
-            Cada barra combina o sabor marcante do chocolate Garoto com
-            ingredientes selecionados, proporcionando uma experiência única
-            aos apreciadores.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 20 -->
-
-      <!-- INICIO PRODUTO ITEM 21 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/trident-verde.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Chiclete Trident</p>
-          <p class="text-sm">
-            O Trident é reconhecido por suas propriedades que auxiliam na
-            saúde bucal, como a prevenção de cáries e a redução de placa
-            bacteriana.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 21 -->
-
-      <!-- INICIO PRODUTO ITEM 22 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/halls-verde.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Halls Maçã Verde</p>
-          <p class="text-sm">
-            O Halls de Maçã Verde é frequentemente apreciado como uma opção de refresco rápido e é conhecido por agradar diferentes públicos devido ao seu equilíbrio entre frescor
-            e sabor frutado.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 22 -->
-
-      <!-- INICIO PRODUTO ITEM 23 -->
-      <div class="flex items-center gap-2 justify-between mt-3">
-        <img src="./assets/hall-morango.png" alt="Coffe espresso" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">Halls Morango</p>
-          <p class="text-sm">
-            O Halls morango é frequentemente apreciado como uma opção de refresco rápido e é conhecido por agradar diferentes públicos devido ao seu equilíbrio entre frescor e
-            sabor frutado.
-          </p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">Free</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${produto.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- FIM PRODUTO ITEM 23 -->
-    </main>
+  <div id="menu" class="grid grid-cols-1 md:grid-cols-2 gap-7 md:gap-10 mx-auto max-w-7xl px-2 mb-16">
   </div>
-  <!-- FIM DO MENU END -->
 
-  <!-- START MODAL CART -->
-  <div class="bg-black/60 w-full h-full fixed top-0 left-0 z-[99] flex items-center justify-center hidden" id="cart-modal">
-    <form id="send-form">
-      <div class="bg-white p-5 rounded-md min-w-[90%] md:min-w-[600px]">
-        <h2 class="text-center font-bold text-2xl mb-2">Meu Carrinho</h2>
-        <div id="cart-items" class="flex justify-between mb-2 flex-col"></div>
-        <p class="font-bold">Total: <span id="cart-total">Free</span></p>
-        <p class="font-bold mt-3">Número da Mesa:<span id="table-number"></span></p>
-        <p class="text-red-500 hidden" id="address-warn">
-          Digite o número da mesa
-        </p>
-        <div class="flex items-center justify-between mt-5 w-full">
-          <button id="close-model-btn" type="button">Fechar</button> <!-- Alterado para type="button" -->
-          <button class="bg-green-500 text-white px-4 rounded" type="submit">
-            Finalizar Pedido
-          </button>
-        </div>
-        <style>
-          button:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-          }
-
-          button {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-          }
-        </style>
-      </div>
-    </form>
-  </div>
-  <!-- END MODAL CART -->
-
-  <!-- START BUTTOON CART FOOTER -->
-  <footer class="w-full bg-red-500 py-3 fixed bottom-0 z-40 flex items justify-center">
-    <button class="flex items-center gap-2 text-white font-bold" id="cart-btn">
-      (<span id="cart-count">0</span>) Veja meu Carrinho
-      <i class="fa fa-cart-plus text-lg text-white"></i>
-    </button>
-  </footer>
   <!-- BUTTOON CART FOOTER END -->
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-  <script src="script.js"></script>
 </body>
 
 </html>
