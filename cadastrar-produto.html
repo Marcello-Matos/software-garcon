@@ -185,10 +185,10 @@
       
       // Criar objeto do produto
       const product = {
-        name,
-        description,
-        price,
-        image: imageFile ? URL.createObjectURL(imageFile) : '' // Usando URL temporária para pré-visualização
+        nome: name,
+        descricao: description,
+        preco: price,
+        imagem: imageFile ? URL.createObjectURL(imageFile) : '' // Usando URL temporária para pré-visualização
       };
       
       // Aqui você pode:
@@ -196,7 +196,7 @@
       saveProductToLocalStorage(product);
       
       // 2. Ou implementar lógica para salvar em um banco de dados/firebase
-      // saveProductToDatabase(product);
+       saveProductToDatabase(product);
       
       // Mostrar mensagem de sucesso
       document.getElementById('success-message').style.display = 'block';
@@ -281,6 +281,7 @@ const db = firebase.firestore();
 
 // Função para salvar no Firebase
 async function saveProductToDatabase(product) {
+  console.log ('product', product)
   try {
     await db.collection("produtos").add(product);
     console.log("Produto salvo com sucesso!");
