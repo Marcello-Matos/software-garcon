@@ -4,13 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Adicionar Novo Produto</title>
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-  
+
   <style>
     body {
       font-family: 'Roboto', sans-serif;
@@ -18,47 +17,47 @@
       padding: 0;
       background-color: #f5f5f5;
     }
-    
+
     .container {
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
     }
-    
+
     h1 {
       text-align: center;
       color: #333;
       margin-bottom: 30px;
     }
-    
+
     .form-container {
       background-color: white;
       padding: 30px;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
-    
+
     .form-group {
       margin-bottom: 20px;
     }
-    
+
     label {
       display: block;
       margin-bottom: 8px;
       font-weight: 500;
       color: #555;
     }
-    
+
     input[type="text"],
     textarea,
-    input[type="file"] {
+    input[type="file"] {    
       width: 100%;
       padding: 10px;
       border: 1px solid #ddd;
       border-radius: 4px;
       font-family: 'Roboto', sans-serif;
     }
-    
+
     textarea {
       min-height: 100px;
       resize: vertical;
@@ -76,7 +75,7 @@
       border: 1px dashed #ccc;
       display: none;
     }
-    
+
     .btn {
       background-color: #4CAF50;
       color: white;
@@ -89,20 +88,20 @@
       width: 100%;
       transition: background-color 0.3s;
     }
-    
+
     .btn:hover {
       background-color: #45a049;
     }
-    
+
     .btn-secondary {
       background-color: #f44336;
       margin-top: 10px;
     }
-    
+
     .btn-secondary:hover {
       background-color: #d32f2f;
     }
-    
+
     .success-message {
       color: #4CAF50;
       text-align: center;
@@ -114,25 +113,24 @@
 <body>
   <div class="container">
     <h1>Adicionar Novo Produto</h1>
-    
     <div class="form-container">
       <form id="product-form">
         <div class="form-group">
           <label for="product-name">Nome do Produto:</label>
-          <input type="text" id="product-name" required>
+          <input type="text" id="product-name" required />
         </div>
-        
+
         <div class="form-group">
           <label for="product-description">Descrição:</label>
           <textarea id="product-description" required></textarea>
         </div>
-        
+
         <div class="form-group">
           <label for="product-price">Preço:</label>
-          <input type="text" id="product-price" value="Free" required>
+          <input type="text" id="product-price" value="0" required />
         </div>
         
-        <div class="form-group">
+        <!-- <div class="form-group">
           <label for="product-image">Imagem do Produto:</label>
           <input type="file" id="product-image" accept="image/*" required>
           
@@ -140,17 +138,89 @@
             <p>Pré-visualização:</p>
             <img id="image-preview" class="image-preview" alt="Pré-visualização da imagem">
           </div>
-        </div>
-        
+        </div> -->
+
         <button type="submit" class="btn">Adicionar Produto</button>
         <button type="button" class="btn btn-secondary" id="back-btn">Voltar para o Menu</button>
       </form>
-      
+
       <p id="success-message" class="success-message">Produto adicionado com sucesso!</p>
     </div>
   </div>
-  
-  <script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc
+    } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDvnrGRrLGUBFKp8xh9ngQn1uKn9QUGq6s",
+      authDomain: "cardapio-mbn.firebaseapp.com",
+      projectId: "cardapio-mbn",
+      storageBucket: "cardapio-mbn.firebasestorage.app",
+      messagingSenderId: "688708152488",
+      appId: "1:688708152488:web:1e12adcc98ba90046c669d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+
+    // 
+    // Isso não funciona porque você está tentando acessar o Firestore da forma antiga (pré v9 modular) com firebase.firestore, 
+    // mas você está usando o SDK modular v9, o que exige que use getFirestore(app)
+    // 
+    const db = getFirestore(app);
+
+    async function saveProductToDatabase(product) {
+      try {
+        ///Na função saveProductToDatabase, você está salvando o produto como um objeto aninhado dentro de outro objeto com a chave product:
+        await addDoc(collection(db, "produtos"), product);
+        console.log("Produto salvo com sucesso!");
+      } catch (error) {
+        console.error("Erro ao salvar produto:", error);
+      }
+    }
+
+    document.getElementById('back-btn').addEventListener('click', function () {
+      window.location.href = 'index.html';
+    });
+    //Essa funcao deve ser assincrona
+    document.getElementById('product-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById('product-name').value;
+      const description = document.getElementById('product-description').value;
+      const price = document.getElementById('product-price').value;
+      const visibilidade = true;
+      //const imageFile = document.getElementById('product-image').files[0];
+      
+      if (!name || !description || isNaN(price) || price < 0) {
+        console.log('Produto com dados inválidos!');
+        return;
+      }
+
+      const product = {
+        nome: name,
+        descricao: description,
+        preco: price,
+        visibilidade: visibilidade,
+        imagem: '' // Caso a imagem não seja necessária
+      };
+
+
+      await saveProductToDatabase(product);
+
+      document.getElementById('success-message').style.display = 'block';
+      document.getElementById('product-form').reset();
+      //document.getElementById('image-preview').style.display = 'none';
+
+      setTimeout(() => {
+        document.getElementById('success-message').style.display = 'none';
+      }, 3000);
+    });
+
     // Pré-visualização da imagem
     document.getElementById('product-image').addEventListener('change', function(e) {
       const preview = document.getElementById('image-preview');
@@ -167,148 +237,6 @@
         reader.readAsDataURL(file);
       }
     });
-    
-    // Voltar para a página principal
-    document.getElementById('back-btn').addEventListener('click', function() {
-      window.location.href = 'index.html';
-    });
-    
-    // Enviar formulário
-    document.getElementById('product-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      // Obter valores do formulário
-      const name = document.getElementById('product-name').value;
-      const description = document.getElementById('product-description').value;
-      const price = document.getElementById('product-price').value;
-      const imageFile = document.getElementById('product-image').files[0];
-      
-      // Criar objeto do produto
-      const product = {
-        nome: name,
-        descricao: description,
-        preco: price,
-        imagem: imageFile ? URL.createObjectURL(imageFile) : '' // Usando URL temporária para pré-visualização
-      };
-      
-      // Aqui você pode:
-      // 1. Salvar no localStorage (para demonstração)
-      saveProductToLocalStorage(product);
-      
-      // 2. Ou implementar lógica para salvar em um banco de dados/firebase
-       saveProductToDatabase(product);
-      
-      // Mostrar mensagem de sucesso
-      document.getElementById('success-message').style.display = 'block';
-      document.getElementById('product-form').reset();
-      document.getElementById('image-preview').style.display = 'none';
-      
-      // Limpar mensagem após 3 segundos
-      setTimeout(() => {
-        document.getElementById('success-message').style.display = 'none';
-      }, 3000);
-    });
-    
-    // Função para salvar no localStorage (para demonstração)
-    function saveProductToLocalStorage(product) {
-      let products = JSON.parse(localStorage.getItem('products')) || [];
-      products.push(product);
-      localStorage.setItem('products', JSON.stringify(products));
-    }
-    
-    // Função para carregar produtos do localStorage no index.html
-    // Esta função deve ser chamada no index.html
-    function loadProductsFromLocalStorage() {
-      const products = JSON.parse(localStorage.getItem('products')) || [];
-      return products;
-    }
-
-    // Adicione esta função ao seu script.js ou no final do index.html
-function displayProducts() {
-  const menuContainer = document.querySelector('#menu main');
-  const products = loadProductsFromLocalStorage();
-  
-  products.forEach(product => {
-    const productHTML = `
-      <div class="flex items-center gap-2 justify-between mt-3 product-item">
-        <img src="${product.image}" alt="${product.name}" class="w-28 h-28 rounded-md hover:scale-110 hover:-rotate-2 duration-300" />
-        <div>
-          <p class="font-bold">${product.name}</p>
-          <p class="text-sm">${product.description}</p>
-          <div class="flex items-center gap-2 justify-between mt-3">
-            <p class="font-bold text-lg">${product.price}</p>
-            <button class="toggle-btn bg-green-500 px-5 rounded text-white" data-name="${product.name}" data-status="on">
-              <i class="fa fa-power-off text-lg mr-1"></i> ON
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    menuContainer.insertAdjacentHTML('beforeend', productHTML);
-  });
-  
-  // Reaplicar os event listeners para os botões toggle
-  document.querySelectorAll('.toggle-btn').forEach(button => {
-    button.addEventListener('click', function() {
-      toggleButton(this);
-    });
-  });
-}
-
-// Chame esta função quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-  displayProducts();
-  
-  // Seu código existente...
-});
-
-// Substitua as funções de localStorage por estas:
-
-// Configuração do Firebase (adicione no início do script)
-const firebaseConfig = {
-      apiKey: "AIzaSyDvnrGRrLGUBFKp8xh9ngQn1uKn9QUGq6s",
-      authDomain: "cardapio-mbn.firebaseapp.com",
-      projectId: "cardapio-mbn",
-      storageBucket: "cardapio-mbn.firebasestorage.app",
-      messagingSenderId: "688708152488",
-      appId: "1:688708152488:web:1e12adcc98ba90046c669d"
-    };
-
-// Inicialize o Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-// Função para salvar no Firebase
-async function saveProductToDatabase(product) {
-  console.log ('product', product)
-  try {
-    await db.collection("produtos").add(product);
-    console.log("Produto salvo com sucesso!");
-  } catch (error) {
-    console.error("Erro ao salvar produto:", error);
-  }
-}
-
-// Função para carregar produtos do Firebase
-async function loadProductsFromDatabase() {
-  try {
-    const querySnapshot = await db.collection("produtos").get();
-    const products = [];
-    
-    querySnapshot.forEach((doc) => {
-      products.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
-    
-    return products;
-  } catch (error) {
-    console.error("Erro ao carregar produtos:", error);
-    return [];
-  }
-}
   </script>
 </body>
 </html>
